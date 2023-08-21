@@ -167,27 +167,4 @@ pwm_b.deinit()
 
 
 
- if (yVal = 0 && 0 < xVal < 510){
-      
-    if (yVal = 0 && 512 < xVal < 1023){
-  int RPWMLED = map(xVal, 511, 1023, 0, 255);
-    if (yVal = 0 && xVal = 0){
-
-
-
-  }
-
-    
-    analogWrite(RPWMLED, downPWM);
-  }
-}
-
-
-
-  if (0 < x < 511 && 0 < yVal < 511){
-
-  if (0 < x < 511 && 511 < yVal < 1023){
-     int LPWMLED = map(yVal, 511, 1023, 0, 255);
-    
-  if (511 < xVal < 1023 && 0 < yVal < 511){
-     int RPWMLED = map(xVal, 511, 1023, 0, 255);
+ 
