@@ -1,3 +1,166 @@
+import machine
+import time
+import socket
+import ujson as json  # Use ujson for JSON parsing in MicroPython
+
+# Wi-Fi configuration
+WIFI_SSID = "AndroidAP"
+WIFI_PASSWORD = "pwdpwdpwd"
+
+# Define the pins for LEDs
+led_pin_a = machine.Pin(14, machine.Pin.OUT)  # GPIO14 for LED A
+led_pin_b = machine.Pin(12, machine.Pin.OUT)  # GPIO12 for LED B
+
+# Create PWM objects
+pwm_a = machine.PWM(led_pin_a, freq=1000)  # Frequency = 1000 Hz
+pwm_b = machine.PWM(led_pin_b, freq=1000)
+
+# Map the input range (-255 to 255) to PWM range (0-1023)
+def map_to_pwm(x_val, x_min, x_max, pwm_min, pwm_max):
+    return int(pwm_min + (pwm_max - pwm_min) * (x_val - x_min) / (x_max - x_min))
+
+# Connect to Wi-Fi
+def connect_to_wifi():
+    import network
+    sta_if = network.WLAN(network.STA_IF)
+    if not sta_if.isconnected():
+        print("Connecting to Wi-Fi...")
+        sta_if.active(True)
+        sta_if.connect(WIFI_SSID, WIFI_PASSWORD)
+        while not sta_if.isconnected():
+            pass
+    print("Connected to Wi-Fi:", sta_if.ifconfig())
+
+# Initialize Wi-Fi connection
+connect_to_wifi()
+
+# Set up socket communication
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket.bind(("192.168.43.45", 8080))  # Use your ESP8266's IP and port
+server_socket.listen(1)
+print("Waiting for a connection...")
+
+try:
+    while True:
+        client, client_addr = server_socket.accept()
+        print("Client connected:", client_addr)
+
+        try:
+            while True:
+                data = client.recv(1024)
+                if not data:
+                    break
+
+                data_str = data.decode("utf-8")
+                data_json = json.loads(data_str)
+                
+                x = data_json.get("x", 0)  # Extract x value from JSON
+                y = data_json.get("y", 0)  # Extract y value from JSON
+
+                # Your coordinate processing logic here...
+                # (You can use the same logic you have in the existing code)
+                if -5 <= x <= 5 and -5 <= y <= 5:
+                    pwm_value_a = 0  # Center
+                    pwm_value_b = 0
+
+                elif -5 <= x <= 5 and 5 < y <= 255:
+                    pwm_value_a = map_to_pwm(y, 5, 255, 0, 1023)  # Forward
+                    pwm_value_b = map_to_pwm(y, 5, 255, 0, 1023)
+
+                elif -5 <= x <= 5 and -255 <= y < -5:
+                    pwm_value_a = map_to_pwm(y, -255, -5, 0, 1023)  # Backward
+                    pwm_value_b = map_to_pwm(y, -255, -5, 0, 1023)
+
+                elif 5 < x <= 255 and -5 <= y <= 5:
+                    pwm_value_a = map_to_pwm(x, 5, 255, 0, 1023)  # Right
+                    pwm_value_b = map_to_pwm(x, 5, 255, 0, 1023)
+
+                elif -255 <= x < -5 and -5 <= y <= 5:
+                    pwm_value_a = map_to_pwm(x, -255, -5, 1023, 0)  # Left
+                    pwm_value_b = map_to_pwm(x, -255, -5, 1023, 0)
+
+
+                elif 5 < x <= 255 and 5 < y <= 255: # Top right
+                    
+                    # x>y 
+                    if x > y:
+                        a_map = map_to_pwm(y, 5, 255, 0, 1023)
+                        pwm_value_a = map_to_pwm(x, y, 255, a_map, 1023)
+                        b_map = map_to_pwm(y, 5, 255, 1023, 0)  
+                        pwm_value_b = map_to_pwm(x, y, 255, 0, b_map)   
+                    # y>x
+                    else:
+                        pwm_value_a = map_to_pwm(y, 5, 255, 0, 1023)
+                        b_map = map_to_pwm(y, 5, 255, 0, 1023)  
+                        pwm_value_b = map_to_pwm(x, 5, y, b_map, 0)    
+
+
+                elif -255 <= x < -5 and 5 < y <= 255:  # Top left
+
+
+                    # x>y 
+                    if abs(x) > y:
+                        a_map = map_to_pwm(y, 5, 255, 1023, 0)
+                        pwm_value_a = map_to_pwm(x, -255, -y, a_map, 0)
+                        b_map = map_to_pwm(y, 5, 255, 0, 1023)  
+                        pwm_value_b = map_to_pwm(x, -255, -y, 1023, b_map)   
+                    # y>x
+                    else:
+                        b_map = map_to_pwm(y, 5, 255, 0, 1023)  
+                        pwm_value_a = map_to_pwm(x, -y, -5, 0, b_map)   #change -255 to st line
+                        pwm_value_b = map_to_pwm(y, 5, 255, 0, 1023) 
+
+
+                elif 5 < x <= 255 and -255 <= y < -5:   # Bottom right
+
+                    # x>y 
+                    if abs(x) > abs(y):
+                        a_map = map_to_pwm(y, -5, -255, 0, 1023)
+                        pwm_value_a = map_to_pwm(x, -255, y, 1023, a_map)
+                        b_map = map_to_pwm(y, -5, -255, 1023, 0)  
+                        pwm_value_b = map_to_pwm(x, -255, y, b_map, 0)   
+                    # y>x
+                    else:
+                        pwm_value_a = map_to_pwm(y, -5, -255, 0, 1023)
+                        b_map = map_to_pwm(y, -5, -255, 0, 1023)  
+                        pwm_value_b = map_to_pwm(x, y, -5, 0, b_map) 
+
+
+                elif -255 <= x < -5 and -255 <= y < -5:  # Bottom left
+
+
+                    # x>y 
+                    if x > abs(y):
+                        a_map = map_to_pwm(y, -5, -255, 1023, 0)
+                        pwm_value_a = map_to_pwm(x, -y, 255, 0, a_map)
+                        b_map = map_to_pwm(y, -5, -255, 0, 1023)  
+                        pwm_value_b = map_to_pwm(x, -y, 255, b_map, 1023)   
+                    # y>x
+                    else:
+                        a_map = map_to_pwm(y, -5, -255, 0, 1023)
+                        pwm_value_a = map_to_pwm(x, -5, -y, a_map, 0)
+                        pwm_value_b = map_to_pwm(y, -5, -255, 0, 1023) 
+                
+                print("pwm_a", pwm_value_a, " ", "pwm_b", pwm_value_b)
+
+                # Apply PWM to LEDs
+                pwm_a.duty(pwm_value_a)
+                pwm_b.duty(pwm_value_b)
+                
+                print("pwm_a", pwm_value_a, " ", "pwm_b", pwm_value_b)
+                
+                # Send a response back to the client (optional)
+                response = "Coordinates received"
+                client.send(response.encode("utf-8"))
+        finally:
+            client.close()
+except KeyboardInterrupt:
+    print("Server stopped.")
+
+# Clean up on exit
+server_socket.close()
+pwm_a.deinit()
+pwm_b.deinit()
 
 
 
