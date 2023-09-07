@@ -70,89 +70,61 @@ while True:
         if x is not None and y is not None:
             print(f"Received joystick data: x={x}, y={y}")
             
-            # Your coordinate processing logic here...
-            # (Use the same logic you provided in the previous code snippet)
             if -5 <= x <= 5 and -5 <= y <= 5:
-                pwm_value_a = 0  # Center
+                pwm_value_a = 0                                           # Center
                 pwm_value_b = 0
-
             elif -5 <= x <= 5 and 5 < y <= 255:
-                pwm_value_a = map_to_pwm(y, 5, 255, 0, 1023)  # Forward
+                pwm_value_a = map_to_pwm(y, 5, 255, 0, 1023)              # Forward
                 pwm_value_b = map_to_pwm(y, 5, 255, 0, 1023)
-
             elif -5 <= x <= 5 and -255 <= y < -5:
-                pwm_value_a = map_to_pwm(y, -255, -5, 0, 1023)  # Backward
-                pwm_value_b = map_to_pwm(y, -255, -5, 0, 1023)
-
+                pwm_value_a = map_to_pwm(y, -5, -255, 0, 1023)            # Backward
+                pwm_value_b = map_to_pwm(y, -5, -255, 0, 1023)
             elif 5 < x <= 255 and -5 <= y <= 5:
-                pwm_value_a = map_to_pwm(x, 5, 255, 0, 1023)  # Right
+                pwm_value_a = map_to_pwm(x, 5, 255, 0, 1023)              # Right
                 pwm_value_b = map_to_pwm(x, 5, 255, 0, 1023)
-
             elif -255 <= x < -5 and -5 <= y <= 5:
-                pwm_value_a = map_to_pwm(x, -255, -5, 1023, 0)  # Left
+                pwm_value_a = map_to_pwm(x, -255, -5, 1023, 0)            # Left
                 pwm_value_b = map_to_pwm(x, -255, -5, 1023, 0)
-
-
-            elif 5 < x <= 255 and 5 < y <= 255: # Top right
-                
-                # x>y 
+            elif 5 < x <= 255 and 5 < y <= 255:                           # Top right
                 if x > y:
                     a_map = map_to_pwm(y, 5, 255, 0, 1023)
                     pwm_value_a = map_to_pwm(x, y, 255, a_map, 1023)
-                    b_map = map_to_pwm(y, 5, 255, 1023, 0)  
-                    pwm_value_b = map_to_pwm(x, y, 255, 0, b_map)   
-                # y>x
+                    b_map = map_to_pwm(y, 5, 255, 1023, 0)
+                    pwm_value_b = map_to_pwm(x, y, 255, 0, b_map)
                 else:
                     pwm_value_a = map_to_pwm(y, 5, 255, 0, 1023)
-                    b_map = map_to_pwm(y, 5, 255, 0, 1023)  
-                    pwm_value_b = map_to_pwm(x, 5, y, b_map, 0)    
-
-
-            elif -255 <= x < -5 and 5 < y <= 255:  # Top left
-
-
-                # x>y 
-                if abs(x) > y:
-                    a_map = map_to_pwm(y, 5, 255, 1023, 0)
-                    pwm_value_a = map_to_pwm(x, -255, -y, a_map, 0)
-                    b_map = map_to_pwm(y, 5, 255, 0, 1023)  
-                    pwm_value_b = map_to_pwm(x, -255, -y, 1023, b_map)   
-                # y>x
+                    b_map = map_to_pwm(y, 5, 255, 0, 1023)
+                    pwm_value_b = map_to_pwm(x, 5, y, b_map, 0)
+            elif -255 <= x < -5 and 5 < y <= 255:                         # Top left
+                if -x > y:
+                    a_map1 = map_to_pwm(y, 5, 255, 1023, 0)
+                    pwm_value_a = map_to_pwm(x, -255, -y, a_map1, 0)
+                    b_map1 = map_to_pwm(y, 5, 255, 0, 1023)
+                    pwm_value_b = map_to_pwm(x, -255, -y, 1023, b_map1)
                 else:
-                    b_map = map_to_pwm(y, 5, 255, 0, 1023)  
-                    pwm_value_a = map_to_pwm(x, -y, -5, 0, b_map)   #change -255 to st line
-                    pwm_value_b = map_to_pwm(y, 5, 255, 0, 1023) 
-
-
-            elif 5 < x <= 255 and -255 <= y < -5:   # Bottom right
-
-                # x>y 
-                if abs(x) > abs(y):
-                    a_map = map_to_pwm(y, -5, -255, 0, 1023)
-                    pwm_value_a = map_to_pwm(x, -255, y, 1023, a_map)
-                    b_map = map_to_pwm(y, -5, -255, 1023, 0)  
-                    pwm_value_b = map_to_pwm(x, -255, y, b_map, 0)   
-                # y>x
+                    a_map1 = map_to_pwm(y, 5, 255, 0, 1023)
+                    pwm_value_a = map_to_pwm(x, -y, -5, 0, a_map1)
+                    pwm_value_b = map_to_pwm(y, 5, 255, 0, 1023)
+            elif 5 < x <= 255 and -255 <= y < -5:                         # Bottom right
+                if x > -y:
+                    a_map2 = map_to_pwm(y, -5, -255, 1023, 0)
+                    pwm_value_a = map_to_pwm(x, -y, 255, 0, a_map2)
+                    b_map2 = map_to_pwm(y, -5, -255, 0, 1023)
+                    pwm_value_b = map_to_pwm(x, -y, 255, b_map2, 1023)
                 else:
+                    pwm_value_b = map_to_pwm(y, -5, -255, 0, 1023)
+                    a_map2 = map_to_pwm(y, -5, -255, 0, 1023)
+                    pwm_value_a = map_to_pwm(x, -y, 5, 0, a_map2)
+            elif -255 <= x < -5 and -255 <= y < -5:                        # Bottom left
+                if x < y:
+                    a_map3 = map_to_pwm(y, -5, -255, 0, 1023)
+                    pwm_value_a = map_to_pwm(x, y, -255, a_map3, 1023)
+                    b_map3 = map_to_pwm(y, -5, -255, 1023, 0)
+                    pwm_value_b = map_to_pwm(x, y, -255, 0, b_map3)
+                else:
+                    b_map3 = map_to_pwm(y, -5, -255, 0, 1023)
+                    pwm_value_b = map_to_pwm(x, -5, y, b_map3, 0)
                     pwm_value_a = map_to_pwm(y, -5, -255, 0, 1023)
-                    b_map = map_to_pwm(y, -5, -255, 0, 1023)  
-                    pwm_value_b = map_to_pwm(x, y, -5, 0, b_map) 
-
-
-            elif -255 <= x < -5 and -255 <= y < -5:  # Bottom left
-
-
-                # x>y 
-                if x > abs(y):
-                    a_map = map_to_pwm(y, -5, -255, 1023, 0)
-                    pwm_value_a = map_to_pwm(x, -y, 255, 0, a_map)
-                    b_map = map_to_pwm(y, -5, -255, 0, 1023)  
-                    pwm_value_b = map_to_pwm(x, -y, 255, b_map, 1023)   
-                # y>x
-                else:
-                    a_map = map_to_pwm(y, -5, -255, 0, 1023)
-                    pwm_value_a = map_to_pwm(x, -5, -y, a_map, 0)
-                    pwm_value_b = map_to_pwm(y, -5, -255, 0, 1023) 
             
             print("pwm_a", pwm_value_a, " ", "pwm_b", pwm_value_b)
             # Apply PWM to LEDs
